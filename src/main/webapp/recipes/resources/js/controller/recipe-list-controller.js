@@ -33,7 +33,7 @@ recipesApp.controller('recipeListController', ['$scope', '$location', 'recipesSe
             recipesService.getRandomRecipe(targetExclude).$promise.then(function (recipe) {
                 if (recipe && recipe.id && recipe.name) {
                     $scope.lastPickedRecipeId = recipe.id;
-                    $location.path('/recipe/' + recipe.id + '/' + recipe.name);
+                    $location.path('/recipe/' + recipe.id + '/' + encodeURIComponent(recipe.name));
                 }
             });
         };

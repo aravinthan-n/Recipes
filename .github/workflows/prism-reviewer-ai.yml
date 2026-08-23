@@ -42,7 +42,7 @@ jobs:
         shell: bash
       
       - name: Run Prism Reviewer AI
-        uses: vyoman-labs/prism-reviewer@main
+        uses: vyoman-labs/prism-reviewer@v1
         with:
           # Required: API key for your LLM Provider (Gemini, OpenRouter, OpenAI, Anthropic, etc.)
           llm-api-key: ${{ secrets.LLM_PROVIDER_API_KEY }}
