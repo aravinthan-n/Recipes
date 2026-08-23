@@ -26,6 +26,8 @@ jobs:
         with:
           app-id: ${{ secrets.PRISM_REVIEWER_APP_ID }}
           private-key: ${{ secrets.PRISM_REVIEWER_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
 
       - name: Resolve GitHub Token
         id: resolve-token
@@ -38,16 +40,23 @@ jobs:
             echo "GitHub App secrets not found. Falling back to GITHUB_TOKEN."
           fi
         shell: bash
-
+      
       - name: Run Prism Reviewer AI
-        uses: vyoman-labs/prism-reviewer@v0.1.0
+        uses: vyoman-labs/prism-reviewer@v1
         with:
           # Required: API key for your LLM Provider (Gemini, OpenRouter, OpenAI, Anthropic, etc.)
           llm-api-key: ${{ secrets.LLM_PROVIDER_API_KEY }}
 
           # Optional: Model identifier (defaults to gemini/gemini-3.1-flash-lite)
-          llm-model-name: 'gemini/gemini-3.1-flash-lite'
+          llm-model-name: ${{ vars.LLM_MODEL }}
 
           # Optional: Custom GitHub token (GitHub App Installation token, PAT, or default GITHUB_TOKEN)
           # Default: ${{ github.token }} (posts comment as github-actions[bot])
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ steps.resolve-token.outputs.token }}
+          enable-monitoring: 'true'
+        env:
+          WARDEN_REASONING_EFFORT: ${{ vars.WARDEN_REASONING_EFFORT }}
+          LANGFUSE_SECRET_KEY: ${{ secrets.LANGFUSE_SECRET_KEY }}
+          LANGFUSE_PUBLIC_KEY: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
+          LANGFUSE_HOST: ${{ vars.LANGFUSE_HOST }}
+          PRISM_MONITORING_LITELLM_CALLBACKS: ${{ vars.PRISM_MONITORING_LITELLM_CALLBACKS }}

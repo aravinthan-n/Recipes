@@ -1,4 +1,4 @@
-# Target build directory
+# Target build directory & artifacts
 target/
 *.war
 *.jar
@@ -21,6 +21,9 @@ target/
 nbproject/
 .vscode/
 
+# Git directory
+.git/
+
 # OS generated files
 .DS_Store
 Thumbs.db
@@ -31,6 +34,17 @@ desktop.ini
 *.log
 logs/
 
+# Secrets and environment files
+*.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+credentials/
+
 # Agent/Temp files
 .antigravity/
-job_log.txt
+.gemini/
+.claude/

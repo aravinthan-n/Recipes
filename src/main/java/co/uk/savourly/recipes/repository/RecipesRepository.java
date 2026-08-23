@@ -8,6 +8,8 @@ import java.util.List;
 
 public interface RecipesRepository {
     Recipes findAll();
+    Recipe findRandom();
+    Recipe findRandom(String excludeId);
     void save(Recipe recipe);
     void saveAll(List<Recipe> recipes);
     Recipe findByName(String name);

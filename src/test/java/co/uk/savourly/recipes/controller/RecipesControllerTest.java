@@ -105,6 +105,40 @@ public class RecipesControllerTest {
     }
 
     @Test
+    @DisplayName("Should return random recipe endpoint response")
+    public void testGetRandomSuccess() {
+        Recipe recipe = new Recipe("1", "Lemon Chicken", 30);
+        when(recipesService.getRandomRecipe(null)).thenReturn(recipe);
+
+        ResponseEntity<Recipe> response = recipesController.getRandom(null);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Lemon Chicken", response.getBody().getName());
+    }
+
+    @Test
+    @DisplayName("Should return 404 NOT_FOUND when random recipe returns null")
+    public void testGetRandomNotFound() {
+        when(recipesService.getRandomRecipe(null)).thenReturn(null);
+
+        ResponseEntity<Recipe> response = recipesController.getRandom(null);
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
+
+    @Test
+    @DisplayName("Should pass excludeId to service in getRandom endpoint")
+    public void testGetRandomWithExcludeId() {
+        Recipe recipe = new Recipe("2", "Beef Stroganoff", 30);
+        when(recipesService.getRandomRecipe("1")).thenReturn(recipe);
+
+        ResponseEntity<Recipe> response = recipesController.getRandom("1");
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Beef Stroganoff", response.getBody().getName());
+        verify(recipesService, times(1)).getRandomRecipe("1");
+    }
+
+    @Test
     @DisplayName("Should search recipes by term")
     public void testSearchEndpoint() {
         Recipes recipes = new Recipes();

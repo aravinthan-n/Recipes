@@ -83,6 +83,22 @@ public class RecipesController {
     }
 
     /**
+     * Get a random recipe.
+     *
+     * @param excludeId Optional recipe ID to exclude from random selection
+     * @return Random Recipe object or 404 if no recipes exist
+     */
+    @GetMapping("/random")
+    public ResponseEntity<Recipe> getRandom(@RequestParam(name = "excludeId", required = false) String excludeId) {
+        LOG.debug("Fetching random recipe excluding id: {}", excludeId);
+        Recipe recipe = recipesService.getRandomRecipe(excludeId);
+        if (recipe == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        return ResponseEntity.ok(recipe);
+    }
+
+    /**
      * Filter recipes by search term (name or ingredient).
      */
     @GetMapping("/search")

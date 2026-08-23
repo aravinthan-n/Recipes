@@ -129,6 +129,40 @@ public class DefaultRecipesServiceTest {
     }
 
     @Test
+    @DisplayName("Should return random recipe when recipes exist")
+    public void testGetRandomRecipeWhenRecipesExist() {
+        Recipe expectedRecipe = RecipeBuilder.getThreeRecipes().get(0);
+        when(mockRecipesRepository.findRandom(null)).thenReturn(expectedRecipe);
+
+        Recipe randomRecipe = recipesService.getRandomRecipe();
+        assertNotNull(randomRecipe);
+        assertEquals(expectedRecipe.getName(), randomRecipe.getName());
+        verify(mockRecipesRepository, times(1)).findRandom(null);
+    }
+
+    @Test
+    @DisplayName("Should return null when getting random recipe from empty system")
+    public void testGetRandomRecipeWhenNoRecipesExist() {
+        when(mockRecipesRepository.findRandom(null)).thenReturn(null);
+
+        Recipe randomRecipe = recipesService.getRandomRecipe();
+        assertNull(randomRecipe);
+        verify(mockRecipesRepository, times(1)).findRandom(null);
+    }
+
+    @Test
+    @DisplayName("Should pass excludeId to repository when getting random recipe")
+    public void testGetRandomRecipeWithExcludeId() {
+        Recipe expectedRecipe = RecipeBuilder.getThreeRecipes().get(1);
+        when(mockRecipesRepository.findRandom("1")).thenReturn(expectedRecipe);
+
+        Recipe randomRecipe = recipesService.getRandomRecipe("1");
+        assertNotNull(randomRecipe);
+        assertEquals(expectedRecipe.getName(), randomRecipe.getName());
+        verify(mockRecipesRepository, times(1)).findRandom("1");
+    }
+
+    @Test
     @DisplayName("Should filter recipes by term matching recipe name")
     public void testFilterRecipesByTermMatchesName() {
         Recipes recipes = new Recipes();

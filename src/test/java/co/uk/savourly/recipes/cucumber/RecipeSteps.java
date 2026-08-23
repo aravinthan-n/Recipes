@@ -239,9 +239,42 @@ public class RecipeSteps {
         }
     }
 
+    @When("a random recipe is requested")
+    public void a_random_recipe_is_requested() {
+        this.currentVisitedRecipe = recipesService.getRandomRecipe();
+    }
+
+    @When("a random recipe is requested when no recipes exist")
+    public void a_random_recipe_is_requested_when_no_recipes_exist() {
+        recipesService.clear();
+        this.currentVisitedRecipe = recipesService.getRandomRecipe();
+        if (this.currentVisitedRecipe == null) {
+            this.currentMessage = "Sorry, we currently have no recipes for you";
+        }
+    }
+
+    @When("a random recipe is requested excluding recipe {string}")
+    public void a_random_recipe_is_requested_excluding_recipe(String recipeName) {
+        Recipe excluded = recipesService.getRecipeByName(recipeName);
+        String excludeId = excluded != null ? excluded.getId() : null;
+        this.currentVisitedRecipe = recipesService.getRandomRecipe(excludeId);
+    }
+
     // ==========================================
     // Then Steps
     // ==========================================
+
+    @Then("a valid random recipe from the system is returned")
+    public void a_valid_random_recipe_from_the_system_is_returned() {
+        assertNotNull(this.currentVisitedRecipe);
+        assertNotNull(this.currentVisitedRecipe.getName());
+    }
+
+    @Then("the recipe {string} is returned")
+    public void the_recipe_is_returned(String recipeName) {
+        assertNotNull(this.currentVisitedRecipe, "Expected a returned recipe");
+        assertEquals(recipeName, this.currentVisitedRecipe.getName());
+    }
 
     @Then("the message {string} is displayed")
     public void the_message_is_displayed(String expectedMessage) {

@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Repository("inMemoryRecipesRepositoryStub")
 public class InMemoryRecipesRepositoryStub implements RecipesRepository {
@@ -21,6 +22,7 @@ public class InMemoryRecipesRepositoryStub implements RecipesRepository {
     private final List<Recipe> dynamicRecipes = new ArrayList<>();
     private final Map<String, User> userMap = new HashMap<>();
     private boolean customized = false;
+    private volatile List<Recipe> cachedDefaultRecipes;
 
     @Override
     public synchronized Recipes findAll() {
@@ -36,22 +38,106 @@ public class InMemoryRecipesRepositoryStub implements RecipesRepository {
         return recipes;
     }
 
+    @Override
+    public synchronized Recipe findRandom() {
+        return findRandom(null);
+    }
+
+    @Override
+    public synchronized Recipe findRandom(String excludeId) {
+        List<Recipe> source = customized ? dynamicRecipes : getDefaultRecipes();
+        if (source == null || source.isEmpty()) {
+            return null;
+        }
+
+        boolean hasExcludeId = excludeId != null && !excludeId.trim().isEmpty();
+        if (hasExcludeId) {
+            Recipe selected = selectRandomMatching(source, excludeId);
+            if (selected != null) {
+                return selected;
+            }
+        }
+
+        return selectRandomMatching(source, null);
+    }
+
+    /**
+     * Selects a random recipe from the given list, optionally excluding a specific recipe ID.
+     *
+     * @param source the list of recipes to choose from
+     * @param excludeId the recipe ID to exclude from selection, or null if no recipe should be excluded
+     * @return a randomly selected matching recipe, or null if no matching recipe is available
+     */
+    private Recipe selectRandomMatching(List<Recipe> source, String excludeId) {
+        if (source == null || source.isEmpty()) {
+            return null;
+        }
+
+        int size = source.size();
+        if (excludeId == null) {
+            return source.get(ThreadLocalRandom.current().nextInt(size));
+        }
+
+        int idx = ThreadLocalRandom.current().nextInt(size);
+        Recipe candidate = source.get(idx);
+        if (candidate != null && !excludeId.equals(candidate.getId())) {
+            return candidate;
+        }
+
+        if (size == 1) {
+            return null;
+        }
+
+        int candidateIdx = ThreadLocalRandom.current().nextInt(size - 1);
+        if (candidateIdx >= idx) {
+            candidateIdx++;
+        }
+        candidate = source.get(candidateIdx);
+        if (candidate != null && !excludeId.equals(candidate.getId())) {
+            return candidate;
+        }
+
+        List<Recipe> matching = new ArrayList<>(size);
+        for (Recipe r : source) {
+            if (r != null && !excludeId.equals(r.getId())) {
+                matching.add(r);
+            }
+        }
+        if (matching.isEmpty()) {
+            return null;
+        }
+        return matching.get(ThreadLocalRandom.current().nextInt(matching.size()));
+    }
+
     private List<Recipe> getDefaultRecipes() {
-        int totalRecipes = 12;
-        try {
-            totalRecipes = Integer.parseInt(totalRecipeToBuild);
-        } catch (NumberFormatException ignored) {
-        }
+        List<Recipe> result = cachedDefaultRecipes;
+        if (result == null) {
+            synchronized (this) {
+                result = cachedDefaultRecipes;
+                if (result == null) {
+                    int totalRecipes = 12;
+                    try {
+                        if (totalRecipeToBuild != null) {
+                            totalRecipes = Integer.parseInt(totalRecipeToBuild);
+                        }
+                    } catch (NumberFormatException ignored) {
+                    }
 
-        if (totalRecipes == 0) {
-            return Collections.emptyList();
+                    if (totalRecipes == 0) {
+                        result = Collections.emptyList();
+                    } else {
+                        List<Recipe> all = createSampleRecipes();
+                        if (totalRecipes >= all.size()) {
+                            result = all;
+                        } else {
+                            result = new ArrayList<>(all.subList(0, totalRecipes));
+                        }
+                    }
+                    cachedDefaultRecipes = result;
+                }
+            }
         }
-
-        List<Recipe> all = createSampleRecipes();
-        if (totalRecipes >= all.size()) {
-            return all;
-        }
-        return new ArrayList<>(all.subList(0, totalRecipes));
+        return result;
     }
 
     private List<Recipe> createSampleRecipes() {
